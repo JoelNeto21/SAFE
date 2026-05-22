@@ -14,8 +14,9 @@ class OccurrencesTable
     {
         return $table
             ->columns([
-                TextColumn::make('student_id')
-                    ->numeric()
+                TextColumn::make('student.name')
+                    ->label('Aluno')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()

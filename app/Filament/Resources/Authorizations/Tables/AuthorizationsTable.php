@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Authorizations\Tables;
 
+use App\Models\User;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -12,6 +13,14 @@ use Filament\Tables\Filters\SelectFilter;
 
 class AuthorizationsTable
 {
+    protected static function currentUser(): ?User
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+
+        return $user;
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -37,12 +46,14 @@ class AuthorizationsTable
 
                 TextColumn::make('processor.name')
                     ->label('Processado por')
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->visible(fn () => ! (self::currentUser()?->hasRole('portaria') ?? false)),
 
                 TextColumn::make('authorized_at')
                     ->label('Autorizado em')
                     ->dateTime('d/m/Y H:i')
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->visible(fn () => ! (self::currentUser()?->hasRole('portaria') ?? false)),
             ])
 
             ->filters([
@@ -70,7 +81,8 @@ class AuthorizationsTable
                     ->color('success')
                     ->visible(
                         fn($record) =>
-                        $record->status === AuthorizationStatus::Pending
+                        ($record->status === AuthorizationStatus::Pending)
+                        && (self::currentUser()?->hasRole(['admin', 'aqv']) ?? false)
                     )
                     ->action(
                         fn($record) =>
@@ -83,7 +95,8 @@ class AuthorizationsTable
                     ->color('danger')
                     ->visible(
                         fn($record) =>
-                        $record->status === AuthorizationStatus::Pending
+                        ($record->status === AuthorizationStatus::Pending)
+                        && (self::currentUser()?->hasRole(['admin', 'aqv']) ?? false)
                     )
                     ->action(
                         fn($record) =>
@@ -96,7 +109,8 @@ class AuthorizationsTable
                     ->color('gray')
                     ->visible(
                         fn($record) =>
-                        $record->status === AuthorizationStatus::Approved
+                        ($record->status === AuthorizationStatus::Approved)
+                        && (self::currentUser()?->hasRole(['admin', 'aqv']) ?? false)
                     )
                     ->action(
                         fn($record) =>

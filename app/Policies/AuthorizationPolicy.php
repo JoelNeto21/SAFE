@@ -25,12 +25,15 @@ class AuthorizationPolicy
      */
     public function view(User $user, Authorization $authorization): bool
     {
-        return $user->hasRole([
-            'admin',
-            'aqv',
-            'professor',
-            'portaria',
-        ]);
+        if ($user->hasRole('admin') || $user->hasRole('aqv') || $user->hasRole('portaria')) {
+            return true;
+        }
+
+        if ($user->hasRole('professor')) {
+            return $authorization->student && $authorization->student->classroom && ($authorization->student->classroom->teacher_id === $user->id);
+        }
+
+        return false;
     }
 
     /**

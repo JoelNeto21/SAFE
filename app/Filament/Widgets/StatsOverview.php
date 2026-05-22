@@ -11,17 +11,25 @@ class StatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+
+        $authorizationsQuery = Authorization::query();
+        if ($user && $user->hasRole('professor')) {
+            $authorizationsQuery->whereHas('student.classroom', fn($q) => $q->where('teacher_id', $user->id));
+        }
+
         return [
             Stat::make(
                 'Autorizações',
-                Authorization::count()
+                $authorizationsQuery->count()
             )
                 ->description('Total registradas')
                 ->descriptionIcon('heroicon-m-document-text'),
 
             Stat::make(
                 'Pendentes',
-                Authorization::where('status', 'pending')->count()
+                (clone $authorizationsQuery)->where('status', 'pending')->count()
             )
                 ->description('Aguardando aprovação')
                 ->descriptionIcon('heroicon-m-clock'),

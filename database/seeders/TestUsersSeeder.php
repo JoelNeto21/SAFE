@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use App\Models\Classroom;
+use App\Models\Student;
 
 class TestUsersSeeder extends Seeder
 {
@@ -34,6 +36,28 @@ class TestUsersSeeder extends Seeder
             ['name' => 'Professor', 'password' => bcrypt('12345678')]
         );
         $professor->assignRole('professor');
+
+        // Criar uma turma atribuída ao professor e alguns alunos de exemplo
+        $classroom = Classroom::firstOrCreate([
+            'name' => 'Turma A',
+        ], [
+            'course' => 'Curso Exemplo',
+            'teacher_id' => $professor->id,
+        ]);
+
+        Student::firstOrCreate([
+            'registration' => '2026001',
+        ], [
+            'name' => 'Aluno Um',
+            'classroom_id' => $classroom->id,
+        ]);
+
+        Student::firstOrCreate([
+            'registration' => '2026002',
+        ], [
+            'name' => 'Aluno Dois',
+            'classroom_id' => $classroom->id,
+        ]);
 
         $portaria = User::firstOrCreate(
             ['email' => 'portaria@safe.com'],

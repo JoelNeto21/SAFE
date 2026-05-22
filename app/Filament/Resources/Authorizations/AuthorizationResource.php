@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AuthorizationResource extends Resource
 {
@@ -41,6 +42,24 @@ class AuthorizationResource extends Resource
     public static function table(Table $table): Table
     {
         return AuthorizationsTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+        if ($user && $user->hasRole('professor')) {
+            return $query->whereHas('student.classroom', fn ($q) => $q->where('teacher_id', $user->id));
+        }
+
+        if ($user && $user->hasRole('portaria')) {
+            // Portaria should see only minimal fields; keep full query but UI will hide columns/actions.
+            return $query;
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

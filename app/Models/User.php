@@ -15,6 +15,9 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 /**
  * @mixin \Spatie\Permission\Traits\HasRoles
+ * @method bool hasRole(string|array $roles)
+ * @method bool hasAnyRole(string|array $roles)
+ * @method \Spatie\Permission\Models\Role|\Illuminate\Contracts\Support\Enumerable assignRole(...$roles)
  */
 class User extends Authenticatable
 {

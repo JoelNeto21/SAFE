@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Occurrences\Schemas;
 
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 
@@ -12,9 +12,12 @@ class OccurrenceForm
     {
         return $schema
             ->components([
-                TextInput::make('student_id')
-                    ->required()
-                    ->numeric(),
+                Select::make('student_id')
+                    ->label('Aluno')
+                    ->relationship('student', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 Textarea::make('description')
                     ->required()
                     ->columnSpanFull(),

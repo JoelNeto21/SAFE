@@ -36,20 +36,6 @@ class AuthorizationForm
                             ->required()
                             ->columnSpanFull(),
 
-                        Select::make('status')
-                            ->label('Status')
-                            ->options([
-                                'pending' => 'Pendente',
-                                'approved' => 'Aprovado',
-                                'denied' => 'Negado',
-                                'finished' => 'Finalizado',
-                            ])
-                            ->default('pending')
-                            ->required(),
-
-                        DateTimePicker::make('authorized_at')
-                            ->label('Data de autorização')
-                            ->seconds(false),
 
                     ])
                     ->columns(2),

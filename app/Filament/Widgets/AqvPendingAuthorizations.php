@@ -10,15 +10,22 @@ class AqvPendingAuthorizations extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+        $query = Authorization::query();
+        if ($user && $user->hasRole('professor')) {
+            $query->whereHas('student.classroom', fn($q) => $q->where('teacher_id', $user->id));
+        }
+
         return [
             Stat::make(
                 'Pendentes',
-                Authorization::where('status', 'pending')->count()
+                (clone $query)->where('status', 'pending')->count()
             ),
 
             Stat::make(
                 'Aprovadas Hoje',
-                Authorization::whereDate('updated_at', today())
+                (clone $query)->whereDate('updated_at', today())
                     ->where('status', 'approved')
                     ->count()
             ),

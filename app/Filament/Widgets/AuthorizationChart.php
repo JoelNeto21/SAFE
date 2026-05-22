@@ -11,14 +11,21 @@ class AuthorizationChart extends ChartWidget
 
     protected function getData(): array
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+        $query = Authorization::query();
+        if ($user && $user->hasRole('professor')) {
+            $query->whereHas('student.classroom', fn($q) => $q->where('teacher_id', $user->id));
+        }
+
         return [
             'datasets' => [
                 [
                     'label' => 'Autorizações',
                     'data' => [
-                        Authorization::where('status', 'pending')->count(),
-                        Authorization::where('status', 'approved')->count(),
-                        Authorization::where('status', 'finished')->count(),
+                        (clone $query)->where('status', 'pending')->count(),
+                        (clone $query)->where('status', 'approved')->count(),
+                        (clone $query)->where('status', 'finished')->count(),
                     ],
                 ],
             ],
