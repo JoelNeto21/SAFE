@@ -1,0 +1,266 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+:root {
+    --safe-red: #e30613;
+    --safe-red-strong: #b8000f;
+    --safe-ink: #111113;
+    --safe-muted: #71717a;
+    --safe-line: #e5e5e7;
+    --safe-bg: #f5f5f7;
+    --safe-card: #ffffff;
+}
+
+.safe-senai-logo {
+    width: 12rem;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.fi-body {
+    background: var(--safe-bg);
+    color: var(--safe-ink);
+}
+
+.fi-main,
+.fi-simple-layout {
+    background: var(--safe-bg);
+}
+
+.fi-topbar {
+    border-bottom: 1px solid rgba(17, 17, 19, 0.08);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(18px);
+}
+
+.fi-sidebar {
+    border-right: 0;
+    background: #0b0b0d;
+}
+
+.fi-sidebar-header,
+.fi-sidebar-footer {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.fi-sidebar-group-label {
+    color: #8b8b92;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar-item-btn {
+    border-radius: 8px;
+    color: #d4d4d8;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease,
+        transform 150ms ease;
+}
+
+.fi-sidebar-item-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn {
+    background: var(--safe-red);
+    color: #ffffff;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon,
+.fi-sidebar-item.fi-active .fi-sidebar-item-label {
+    color: #ffffff;
+}
+
+.fi-page-header-heading {
+    color: var(--safe-ink);
+    font-size: clamp(1.45rem, 1.2rem + 0.35vw, 1.9rem);
+    font-weight: 720;
+    letter-spacing: 0;
+}
+
+.fi-page-header-subheading {
+    color: var(--safe-muted);
+}
+
+.fi-section,
+.fi-ta,
+.fi-wi-stats-overview-stat,
+.fi-wi-chart,
+.fi-simple-main,
+.fi-modal-window {
+    border: 1px solid rgba(17, 17, 19, 0.08);
+    border-radius: 8px;
+    background: var(--safe-card);
+    box-shadow: 0 1px 2px rgba(17, 17, 19, 0.04);
+}
+
+.fi-section-header {
+    border-bottom-color: rgba(17, 17, 19, 0.08);
+}
+
+.fi-section-header-heading,
+.fi-ta-header-heading,
+.fi-wi-stats-overview-stat-label {
+    color: var(--safe-ink);
+    font-weight: 680;
+}
+
+.fi-section-header-description,
+.fi-ta-text,
+.fi-input-wrp-hint,
+.fi-fo-field-wrp-helper-text {
+    color: var(--safe-muted);
+}
+
+.fi-input-wrp,
+.fi-select-input,
+.fi-textarea {
+    border-radius: 8px;
+}
+
+.fi-btn,
+.fi-icon-btn {
+    border-radius: 8px;
+    font-weight: 650;
+}
+
+.fi-btn-color-primary {
+    background: var(--safe-red);
+}
+
+.fi-btn-color-primary:hover {
+    background: var(--safe-red-strong);
+}
+
+.fi-link {
+    color: var(--safe-red);
+}
+
+.fi-badge {
+    border-radius: 999px;
+}
+
+.fi-simple-layout {
+    min-height: 100vh;
+}
+
+.fi-simple-main {
+    width: min(100%, 27rem);
+    padding: 2rem;
+}
+
+.fi-simple-header {
+    align-items: center;
+    text-align: center;
+}
+
+.fi-simple-header .safe-senai-logo {
+    width: min(14rem, 72vw);
+}
+
+.fi-simple-header-heading {
+    color: var(--safe-ink);
+    font-size: 1.7rem;
+    font-weight: 760;
+    letter-spacing: 0;
+}
+
+.fi-simple-header-subheading {
+    color: var(--safe-muted);
+}
+
+.safe-login-shortcuts {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 30;
+    width: min(21rem, calc(100vw - 2rem));
+    border: 1px solid rgba(17, 17, 19, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 0.85rem;
+    box-shadow: 0 12px 30px rgba(17, 17, 19, 0.08);
+    backdrop-filter: blur(18px);
+}
+
+.safe-login-shortcuts__header,
+.safe-login-shortcuts__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.safe-login-shortcuts__header {
+    padding: 0 0.15rem 0.65rem;
+    color: var(--safe-ink);
+    font-size: 0.78rem;
+    font-weight: 760;
+}
+
+.safe-login-shortcuts__list {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.safe-login-shortcuts__item {
+    border-radius: 8px;
+    padding: 0.48rem 0.55rem;
+    transition: background-color 150ms ease;
+}
+
+.safe-login-shortcuts__item:hover {
+    background: rgba(17, 17, 19, 0.04);
+}
+
+.safe-login-shortcuts__item dd {
+    display: grid;
+    flex: 1;
+    gap: 0.05rem;
+    min-width: 0;
+    text-align: right;
+}
+
+.safe-login-shortcuts__item strong {
+    color: var(--safe-ink);
+    font-size: 0.76rem;
+    font-weight: 720;
+}
+
+.safe-login-shortcuts__item span {
+    overflow: hidden;
+    color: var(--safe-muted);
+    font-size: 0.68rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.safe-login-shortcuts kbd {
+    display: inline-grid;
+    min-width: 1.55rem;
+    height: 1.4rem;
+    place-items: center;
+    border: 1px solid rgba(17, 17, 19, 0.12);
+    border-radius: 6px;
+    background: #f7f7f8;
+    color: var(--safe-ink);
+    font-size: 0.68rem;
+    font-weight: 750;
+    line-height: 1;
+}
+
+@media (max-width: 760px) {
+    .safe-login-shortcuts {
+        position: static;
+        width: 100%;
+        margin-top: 1rem;
+        box-shadow: none;
+    }
+}

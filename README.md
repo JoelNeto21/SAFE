@@ -1,58 +1,175 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SAFE - Sistema de Autorização e Fluxo Escolar
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SAFE é uma aplicação Laravel com painel administrativo em Filament para digitalizar autorizações, ocorrências, notificações e comunicação interna entre AQV, professores e portaria.
 
-## About Laravel
+O projeto substitui fluxos manuais em papel por registros digitais rastreáveis, com histórico de ações, permissões por setor e escopo de acesso por turma.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Sobre o projeto
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+O SAFE resolve o controle operacional de entrada tardia e saída antecipada de alunos. A AQV registra a autorização, o professor da turma valida a movimentação e a portaria acompanha as liberações necessárias para finalizar o fluxo.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Principais objetivos:
 
-## Learning Laravel
+- centralizar autorizações de entrada e saída;
+- controlar quais turmas e alunos cada professor pode acessar;
+- manter histórico auditável de leituras, aprovações, recusas e finalizações;
+- notificar automaticamente os setores envolvidos;
+- oferecer um painel administrativo pronto para demonstração acadêmica.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Stack utilizada
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.3
+- Laravel 13
+- Filament 5
+- Livewire 4
+- MySQL em desenvolvimento local
+- SQLite em memória para testes automatizados
+- Spatie Laravel Permission
+- Tailwind CSS 4
+- Vite
+- PHPUnit
+- Laravel Pint
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Arquitetura
 
-## Agentic Development
+A aplicação segue a estrutura padrão do Laravel, com separação por domínio:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- `app/Models`: entidades principais, como `User`, `Course`, `Classroom`, `Student`, `Authorization`, `Occurrence`, `InternalMessage` e modelos de auditoria.
+- `app/Filament/Resources`: telas administrativas do Filament para CRUDs e listagens operacionais.
+- `app/Policies`: regras de autorização por perfil e por escopo de turma.
+- `app/Services/SafeNotifier.php`: serviço central de notificações internas.
+- `app/Notifications`: notificações persistidas no banco.
+- `database/migrations`: estrutura do banco, relações, histórico e mensagens.
+- `database/seeders`: dados de demonstração, usuários de teste, cursos, turmas e alunos.
+- `tests/Feature`: testes de autenticação, navegação, seeders, permissões e fluxos SAFE.
+
+## Funcionalidades
+
+- Autenticação no painel administrativo.
+- Perfis por setor: Admin, AQV, Professor e Portaria.
+- CRUD de funcionários com vínculo de professores a múltiplas turmas.
+- Cadastro de cursos, turmas e alunos.
+- Seeders com cursos Desenvolvimento de Sistemas e Eletroeletrônica.
+- Seeders com 3 turmas por curso e 5 alunos por turma.
+- Professores seedados: Eduardo, Samuel e Bruno.
+- Eduardo acessa DS e Eletroeletrônica.
+- Samuel acessa apenas Eletroeletrônica.
+- Bruno acessa apenas Desenvolvimento de Sistemas.
+- Fluxo de autorização de entrada.
+- Fluxo de autorização de saída antecipada.
+- Confirmação de leitura pelo professor.
+- Aprovação, recusa e finalização com histórico.
+- Notificações internas persistidas no banco.
+- Badges de mensagens e notificações não lidas.
+- Mensagens internas por usuário ou setor.
+- Ocorrências escolares com status, observações e auditoria.
+- Históricos de autorizações e ocorrências disponíveis no painel.
+
+## Fluxo AQV, Professor e Portaria
+
+1. A AQV ou a portaria registra uma autorização digital.
+2. O sistema notifica os professores vinculados à turma do aluno.
+3. O professor confirma leitura e aprova ou recusa a solicitação.
+4. Em saída antecipada, a portaria recebe a liberação do professor.
+5. A portaria confirma a saída e encerra o fluxo.
+6. Cada etapa gera registros em histórico e notificações internas.
+
+## Como executar
+
+Clone o projeto e instale as dependências:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Configure o ambiente:
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Configure o banco no `.env`. Exemplo para MySQL local:
 
-## Code of Conduct
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3308
+DB_DATABASE=safe
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Crie e popule o banco:
 
-## Security Vulnerabilities
+```bash
+php artisan migrate:fresh --seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Compile os assets:
 
-## License
+```bash
+npm run build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Suba o servidor local:
+
+```bash
+php artisan serve
+```
+
+Acesse:
+
+```text
+http://127.0.0.1:8000/admin
+```
+
+## Usuários de teste
+
+Todos os usuários abaixo usam a senha `12345678`, exceto `test@example.com`, que usa `password`.
+
+| Perfil | E-mail | Permissão |
+| --- | --- | --- |
+| Admin | `admin@safe.com` | Acesso total, incluindo funcionários |
+| AQV | `aqv@safe.com` | Autorizações, ocorrências, alunos e turmas |
+| Portaria | `portaria@safe.com` | Autorizações, mensagens e confirmações |
+| Professor Eduardo | `eduardo@safe.com` | DS e Eletroeletrônica |
+| Professor Samuel | `samuel@safe.com` | Eletroeletrônica |
+| Professor Bruno | `bruno@safe.com` | Desenvolvimento de Sistemas |
+| Test User | `test@example.com` | Admin técnico para testes |
+
+## Testes e qualidade
+
+Execute a suíte automatizada:
+
+```bash
+php artisan test
+```
+
+Verifique o padrão de código:
+
+```bash
+vendor/bin/pint --test
+```
+
+Compile os assets antes de publicar:
+
+```bash
+npm run build
+```
+
+## Melhorias futuras
+
+- Broadcasting com WebSockets para notificações instantâneas sem polling.
+- Assinatura digital ou confirmação por QR Code na portaria.
+- Relatórios por período, curso, turma e motivo.
+- Exportação de autorizações e ocorrências em PDF.
+- Dashboard específico por setor.
+- Controle de responsáveis legais do aluno.
+- Integração com sistemas acadêmicos externos.
+- Auditoria avançada com trilhas por IP e dispositivo.
+
+## Licença
+
+Projeto acadêmico desenvolvido sobre Laravel e bibliotecas open source.

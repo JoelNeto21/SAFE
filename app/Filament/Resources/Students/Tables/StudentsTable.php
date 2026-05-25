@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Students\Tables;
 
-use Filament\Tables\Table;
-use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class StudentsTable
 {
@@ -23,6 +23,10 @@ class StudentsTable
 
                 TextColumn::make('classroom.name')
                     ->label('Turma'),
+
+                TextColumn::make('classroom.course')
+                    ->label('Curso')
+                    ->toggleable(),
             ])
             ->filters([
                 //
@@ -38,7 +42,7 @@ class StudentsTable
             ->emptyStateDescription('Cadastre alunos para começar.')
 
             ->emptyStateIcon('heroicon-o-users')
-            
+
             ->searchable();
     }
 }

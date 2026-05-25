@@ -9,7 +9,7 @@ class CreateAuthorization extends CreateRecord
 {
     protected static string $resource = AuthorizationResource::class;
 
-    protected static ?string $title = 'Cadastrar autorização';
+    protected static ?string $title = 'Nova autorização';
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

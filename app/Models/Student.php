@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Student extends Model
 {
@@ -12,13 +14,18 @@ class Student extends Model
         'classroom_id',
     ];
 
-    public function classroom()
+    public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class);
     }
 
-    public function authorizations()
+    public function authorizations(): HasMany
     {
         return $this->hasMany(Authorization::class);
+    }
+
+    public function occurrences(): HasMany
+    {
+        return $this->hasMany(Occurrence::class);
     }
 }

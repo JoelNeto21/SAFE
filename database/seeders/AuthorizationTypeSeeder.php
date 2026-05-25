@@ -2,19 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\AuthorizationType;
+use Illuminate\Database\Seeder;
 
 class AuthorizationTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        AuthorizationType::create([
-            'name' => 'Entrada'
-        ]);
+        AuthorizationType::query()
+            ->where('name', 'SaÃƒÂ­da')
+            ->update(['name' => 'Saída']);
 
-        AuthorizationType::create([
-            'name' => 'Saída'
-        ]);
+        foreach (['Entrada', 'Saída'] as $type) {
+            AuthorizationType::updateOrCreate(['name' => $type]);
+        }
     }
 }

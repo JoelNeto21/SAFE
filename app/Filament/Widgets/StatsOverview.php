@@ -2,21 +2,32 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Student;
 use App\Models\Authorization;
+use App\Models\Student;
+use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Database\Eloquent\Builder;
 
 class StatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
 
         $authorizationsQuery = Authorization::query();
+        $studentsQuery = Student::query();
         if ($user && $user->hasRole('professor')) {
-            $authorizationsQuery->whereHas('student.classroom', fn($q) => $q->where('teacher_id', $user->id));
+            $authorizationsQuery->whereHas('student.classroom', function (Builder $query) use ($user): void {
+                $query->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
+
+            $studentsQuery->whereHas('classroom', function (Builder $query) use ($user): void {
+                $query->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
         }
 
         return [
@@ -36,7 +47,7 @@ class StatsOverview extends BaseWidget
 
             Stat::make(
                 'Alunos',
-                Student::count()
+                $studentsQuery->count()
             )
                 ->description('Total cadastrados')
                 ->descriptionIcon('heroicon-m-academic-cap'),

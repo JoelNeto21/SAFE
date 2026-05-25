@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Classrooms\Tables;
 
-use Filament\Tables\Table;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class ClassroomsTable
 {
@@ -17,6 +17,12 @@ class ClassroomsTable
 
                 TextColumn::make('course')
                     ->label('Curso'),
+
+                TextColumn::make('teachers.name')
+                    ->label('Professores')
+                    ->badge()
+                    ->separator(', ')
+                    ->toggleable(),
 
                 TextColumn::make('students_count')
                     ->counts('students')

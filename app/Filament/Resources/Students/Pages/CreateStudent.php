@@ -9,7 +9,7 @@ class CreateStudent extends CreateRecord
 {
     protected static string $resource = StudentResource::class;
 
-    protected static ?string $title = 'Cadastrar aluno';
+    protected static ?string $title = 'Novo aluno';
 
     public function getBreadcrumb(): string
     {

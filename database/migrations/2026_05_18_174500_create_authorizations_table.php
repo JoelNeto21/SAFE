@@ -31,7 +31,7 @@ return new class extends Migration
                 'pending',
                 'approved',
                 'denied',
-                'finished'
+                'finished',
             ])->default('pending');
 
             $table->text('reason')->nullable();

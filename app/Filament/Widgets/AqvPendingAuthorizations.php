@@ -2,19 +2,24 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Authorization;
+use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use App\Models\Authorization;
+use Illuminate\Database\Eloquent\Builder;
 
 class AqvPendingAuthorizations extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
         $query = Authorization::query();
         if ($user && $user->hasRole('professor')) {
-            $query->whereHas('student.classroom', fn($q) => $q->where('teacher_id', $user->id));
+            $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
+                $query->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
         }
 
         return [
@@ -24,7 +29,7 @@ class AqvPendingAuthorizations extends StatsOverviewWidget
             ),
 
             Stat::make(
-                'Aprovadas Hoje',
+                'Aprovadas hoje',
                 (clone $query)->whereDate('updated_at', today())
                     ->where('status', 'approved')
                     ->count()
@@ -34,7 +39,7 @@ class AqvPendingAuthorizations extends StatsOverviewWidget
 
     public static function canView(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user?->hasRole([

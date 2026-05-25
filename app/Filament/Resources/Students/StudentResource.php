@@ -8,13 +8,14 @@ use App\Filament\Resources\Students\Pages\ListStudents;
 use App\Filament\Resources\Students\Schemas\StudentForm;
 use App\Filament\Resources\Students\Tables\StudentsTable;
 use App\Models\Student;
+use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class StudentResource extends Resource
 {
@@ -28,11 +29,12 @@ class StudentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Alunos';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros acadêmicos';
 
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
+
     public static function form(Schema $schema): Schema
     {
         return StudentForm::configure($schema);
@@ -47,10 +49,14 @@ class StudentResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->hasRole('professor')) {
-            return $query->whereHas('classroom', fn ($q) => $q->where('teacher_id', $user->id));
+            return $query->whereHas('classroom', function (Builder $query) use ($user): void {
+                $query
+                    ->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
         }
 
         return $query;
@@ -74,13 +80,13 @@ class StudentResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user?->hasRole([
             'admin',
             'aqv',
-            'professor'
+            'professor',
         ]) ?? false;
     }
 }

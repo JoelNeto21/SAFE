@@ -26,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('authorizations', function (Blueprint $table) {
-            //
+            $table->dropConstrainedForeignId('processed_by');
         });
     }
 };

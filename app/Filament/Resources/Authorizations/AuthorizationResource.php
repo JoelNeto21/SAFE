@@ -8,13 +8,14 @@ use App\Filament\Resources\Authorizations\Pages\ListAuthorizations;
 use App\Filament\Resources\Authorizations\Schemas\AuthorizationForm;
 use App\Filament\Resources\Authorizations\Tables\AuthorizationsTable;
 use App\Models\Authorization;
+use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class AuthorizationResource extends Resource
 {
@@ -24,11 +25,11 @@ class AuthorizationResource extends Resource
 
     protected static ?string $navigationLabel = 'Autorizações';
 
-    protected static ?string $modelLabel = 'Autorização';
+    protected static ?string $modelLabel = 'autorização';
 
-    protected static ?string $pluralModelLabel = 'Autorizações';
+    protected static ?string $pluralModelLabel = 'autorizações';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Fluxo Escolar';
+    protected static string|UnitEnum|null $navigationGroup = 'Operação escolar';
 
     protected static ?int $navigationSort = 1;
 
@@ -48,10 +49,14 @@ class AuthorizationResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->hasRole('professor')) {
-            return $query->whereHas('student.classroom', fn ($q) => $q->where('teacher_id', $user->id));
+            return $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
+                $query
+                    ->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
         }
 
         if ($user && $user->hasRole('portaria')) {
@@ -80,7 +85,7 @@ class AuthorizationResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user?->hasRole([

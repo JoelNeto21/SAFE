@@ -8,12 +8,14 @@ use App\Filament\Resources\Classrooms\Pages\ListClassrooms;
 use App\Filament\Resources\Classrooms\Schemas\ClassroomForm;
 use App\Filament\Resources\Classrooms\Tables\ClassroomsTable;
 use App\Models\Classroom;
+use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class ClassroomResource extends Resource
 {
@@ -27,7 +29,7 @@ class ClassroomResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Turmas';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|UnitEnum|null $navigationGroup = 'Cadastros acadêmicos';
 
     protected static ?int $navigationSort = 2;
 
@@ -41,6 +43,21 @@ class ClassroomResource extends Resource
     public static function table(Table $table): Table
     {
         return ClassroomsTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user && $user->hasRole('professor')) {
+            return $query
+                ->where('teacher_id', $user->id)
+                ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array
@@ -61,7 +78,7 @@ class ClassroomResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user?->hasRole([

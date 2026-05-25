@@ -8,12 +8,14 @@ use App\Filament\Resources\Occurrences\Pages\ListOccurrences;
 use App\Filament\Resources\Occurrences\Schemas\OccurrenceForm;
 use App\Filament\Resources\Occurrences\Tables\OccurrencesTable;
 use App\Models\Occurrence;
+use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class OccurrenceResource extends Resource
 {
@@ -23,11 +25,11 @@ class OccurrenceResource extends Resource
 
     protected static ?string $navigationLabel = 'Ocorrências';
 
-    protected static ?string $modelLabel = 'Ocorrência';
+    protected static ?string $modelLabel = 'ocorrência';
 
-    protected static ?string $pluralModelLabel = 'Ocorrências';
+    protected static ?string $pluralModelLabel = 'ocorrências';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Fluxo Escolar';
+    protected static string|UnitEnum|null $navigationGroup = 'Operação escolar';
 
     protected static ?int $navigationSort = 2;
 
@@ -41,6 +43,23 @@ class OccurrenceResource extends Resource
     public static function table(Table $table): Table
     {
         return OccurrencesTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user && $user->hasRole('professor')) {
+            return $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
+                $query
+                    ->where('teacher_id', $user->id)
+                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
+            });
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array
@@ -61,12 +80,14 @@ class OccurrenceResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user?->hasRole([
             'admin',
             'aqv',
+            'professor',
+            'portaria',
         ]) ?? false;
     }
 }

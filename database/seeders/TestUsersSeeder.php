@@ -5,64 +5,39 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use App\Models\Classroom;
-use App\Models\Student;
 
 class TestUsersSeeder extends Seeder
 {
     public function run(): void
     {
-        // Criar os cargos
-        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'aqv', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'portaria', 'guard_name' => 'web']);
+        foreach (['admin', 'aqv', 'professor', 'portaria'] as $role) {
+            Role::firstOrCreate([
+                'name' => $role,
+                'guard_name' => 'web',
+            ]);
+        }
 
-        // Criar ou encontrar usuários
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@safe.com'],
-            ['name' => 'Administrador', 'password' => bcrypt('12345678')]
-        );
-        $admin->assignRole('admin');
+        $users = [
+            ['email' => 'admin@safe.com', 'name' => 'Administrador SAFE', 'role' => 'admin'],
+            ['email' => 'aqv@safe.com', 'name' => 'Equipe AQV', 'role' => 'aqv'],
+            ['email' => 'portaria@safe.com', 'name' => 'Equipe Portaria', 'role' => 'portaria'],
+            ['email' => 'eduardo@safe.com', 'name' => 'Professor Eduardo', 'role' => 'professor'],
+            ['email' => 'samuel@safe.com', 'name' => 'Professor Samuel', 'role' => 'professor'],
+            ['email' => 'bruno@safe.com', 'name' => 'Professor Bruno', 'role' => 'professor'],
+        ];
 
-        $aqv = User::firstOrCreate(
-            ['email' => 'aqv@safe.com'],
-            ['name' => 'AQV', 'password' => bcrypt('12345678')]
-        );
-        $aqv->assignRole('aqv');
+        foreach ($users as $data) {
+            $user = User::updateOrCreate(
+                ['email' => $data['email']],
+                [
+                    'name' => $data['name'],
+                    'password' => '12345678',
+                    'sector' => $data['role'],
+                    'is_active' => true,
+                ],
+            );
 
-        $professor = User::firstOrCreate(
-            ['email' => 'professor@safe.com'],
-            ['name' => 'Professor', 'password' => bcrypt('12345678')]
-        );
-        $professor->assignRole('professor');
-
-        // Criar uma turma atribuída ao professor e alguns alunos de exemplo
-        $classroom = Classroom::firstOrCreate([
-            'name' => 'Turma A',
-        ], [
-            'course' => 'Curso Exemplo',
-            'teacher_id' => $professor->id,
-        ]);
-
-        Student::firstOrCreate([
-            'registration' => '2026001',
-        ], [
-            'name' => 'Aluno Um',
-            'classroom_id' => $classroom->id,
-        ]);
-
-        Student::firstOrCreate([
-            'registration' => '2026002',
-        ], [
-            'name' => 'Aluno Dois',
-            'classroom_id' => $classroom->id,
-        ]);
-
-        $portaria = User::firstOrCreate(
-            ['email' => 'portaria@safe.com'],
-            ['name' => 'Portaria', 'password' => bcrypt('12345678')]
-        );
-        $portaria->assignRole('portaria');
+            $user->syncRoles([$data['role']]);
+        }
     }
 }

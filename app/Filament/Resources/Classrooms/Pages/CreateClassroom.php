@@ -9,7 +9,7 @@ class CreateClassroom extends CreateRecord
 {
     protected static string $resource = ClassroomResource::class;
 
-    protected static ?string $title = 'Cadastrar turma';
+    protected static ?string $title = 'Nova turma';
 
     public function getBreadcrumb(): string
     {

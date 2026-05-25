@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Authorization;
+use App\Models\User;
 
 class AuthorizationPolicy
 {
@@ -30,7 +30,9 @@ class AuthorizationPolicy
         }
 
         if ($user->hasRole('professor')) {
-            return $authorization->student && $authorization->student->classroom && ($authorization->student->classroom->teacher_id === $user->id);
+            return $authorization->student?->classroom
+                ? $user->canAccessClassroom($authorization->student->classroom)
+                : false;
         }
 
         return false;
@@ -44,7 +46,7 @@ class AuthorizationPolicy
         return $user->hasRole([
             'admin',
             'aqv',
-            'professor',
+            'portaria',
         ]);
     }
 
