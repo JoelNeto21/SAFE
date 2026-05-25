@@ -47,6 +47,21 @@ class AuthorizationAuditResource extends Resource
                     ->label('Aluno')
                     ->searchable(),
 
+                TextColumn::make('authorization.missed_classes')
+                    ->label('Aulas perdidas')
+                    ->state(fn ($record): string => collect($record->authorization?->missed_classes ?? [])
+                        ->map(fn (string $class): string => match ($class) {
+                            'class_1' => '1ª',
+                            'class_2' => '2ª',
+                            'class_3' => '3ª',
+                            'class_4' => '4ª',
+                            'class_5' => '5ª',
+                            default => $class,
+                        })
+                        ->implode(', '))
+                    ->placeholder('-')
+                    ->toggleable(),
+
                 TextColumn::make('user.name')
                     ->label('Usuário')
                     ->placeholder('SAFE'),
@@ -60,12 +75,12 @@ class AuthorizationAuditResource extends Resource
                     ->wrap()
                     ->placeholder('-'),
 
-                TextColumn::make('created_at')
-                    ->label('Data')
+                TextColumn::make('updated_at')
+                    ->label('Atualizado em')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getEloquentQuery(): Builder
@@ -75,10 +90,7 @@ class AuthorizationAuditResource extends Resource
         /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->hasRole('professor')) {
-            return $query->whereHas('authorization.student.classroom', function (Builder $classrooms) use ($user): void {
-                $classrooms->where('teacher_id', $user->id)
-                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
-            });
+            return $query->whereHas('authorization', fn (Builder $authorizations) => $authorizations->where('teacher_id', $user->id));
         }
 
         return $query;

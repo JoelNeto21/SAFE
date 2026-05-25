@@ -6,7 +6,6 @@ use App\Models\Authorization;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\Eloquent\Builder;
 
 class AqvPendingAuthorizations extends StatsOverviewWidget
 {
@@ -16,10 +15,7 @@ class AqvPendingAuthorizations extends StatsOverviewWidget
         $user = auth()->user();
         $query = Authorization::query();
         if ($user && $user->hasRole('professor')) {
-            $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
-                $query->where('teacher_id', $user->id)
-                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
-            });
+            $query->where('teacher_id', $user->id);
         }
 
         return [

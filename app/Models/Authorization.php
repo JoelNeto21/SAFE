@@ -7,17 +7,21 @@ use App\Services\SafeNotifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Authorization extends Model
 {
     protected $fillable = [
         'student_id',
         'authorization_type_id',
+        'teacher_id',
         'requested_by',
         'processed_by',
         'status',
         'event_at',
+        'missed_classes',
         'reason',
         'responsible_name',
         'observations',
@@ -35,17 +39,22 @@ class Authorization extends Model
         'read_at' => 'datetime',
         'approved_at' => 'datetime',
         'completed_at' => 'datetime',
+        'missed_classes' => 'array',
         'status' => AuthorizationStatus::class,
     ];
 
     protected static function booted(): void
     {
+        static::saving(function (Authorization $authorization): void {
+            $authorization->normalizeAndValidateInstitutionalTime();
+        });
+
         static::created(function (Authorization $authorization): void {
-            $authorization->audits()->create([
-                'user_id' => $authorization->requested_by,
-                'action' => 'created',
-                'note' => 'Autorização criada no SAFE.',
-            ]);
+            $authorization->recordAudit(
+                User::find($authorization->requested_by),
+                'created',
+                'Autorização criada no SAFE.',
+            );
 
             app(SafeNotifier::class)->notifyAuthorizationCreated($authorization);
         });
@@ -66,6 +75,11 @@ class Authorization extends Model
         return $this->belongsTo(User::class, 'requested_by');
     }
 
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
+
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
@@ -82,30 +96,30 @@ class Authorization extends Model
             'read_at' => $this->read_at ?? now(),
         ]);
 
-        $this->audits()->create([
-            'user_id' => $user->id,
-            'action' => 'read',
-            'note' => $note,
-        ]);
+        $this->recordAudit($user, 'read', $note);
 
         app(SafeNotifier::class)->notifyAuthorizationRead($this, $user);
     }
 
     public function approve(User $user, ?string $note = null): void
     {
+        $isExitFlow = $this->isExitFlow();
+        $approvedAt = now();
+
         $this->update([
-            'status' => AuthorizationStatus::Approved,
-            'authorized_at' => now(),
-            'approved_at' => now(),
+            'status' => $isExitFlow ? AuthorizationStatus::Approved : AuthorizationStatus::Finished,
+            'authorized_at' => $approvedAt,
+            'approved_at' => $approvedAt,
+            'completed_at' => $isExitFlow ? $this->completed_at : $approvedAt,
             'processed_by' => $user->id,
             'teacher_notes' => $note ?: $this->teacher_notes,
         ]);
 
-        $this->audits()->create([
-            'user_id' => $user->id,
-            'action' => 'approved',
-            'note' => $note,
-        ]);
+        $this->recordAudit(
+            $user,
+            $isExitFlow ? 'approved' : 'finished',
+            $isExitFlow ? $note : ($note ?: 'Entrada finalizada automaticamente após aprovação do professor.'),
+        );
 
         app(SafeNotifier::class)->notifyAuthorizationApproved($this, $user);
     }
@@ -118,11 +132,7 @@ class Authorization extends Model
             'teacher_notes' => $note ?: $this->teacher_notes,
         ]);
 
-        $this->audits()->create([
-            'user_id' => $user->id,
-            'action' => 'denied',
-            'note' => $note,
-        ]);
+        $this->recordAudit($user, 'denied', $note);
 
         app(SafeNotifier::class)->notifyAuthorizationDenied($this, $user);
     }
@@ -135,13 +145,39 @@ class Authorization extends Model
             'gate_notes' => $note ?: $this->gate_notes,
         ]);
 
-        $this->audits()->create([
-            'user_id' => $user?->id ?? $this->processed_by,
-            'action' => 'finished',
-            'note' => $note,
-        ]);
+        $this->recordAudit($user ?? User::find($this->processed_by), 'finished', $note);
 
         app(SafeNotifier::class)->notifyAuthorizationFinished($this, $user);
+    }
+
+    public function approveAtGate(User $user, ?string $note = null): void
+    {
+        $approvedAt = now();
+
+        $this->update([
+            'status' => AuthorizationStatus::Finished,
+            'authorized_at' => $approvedAt,
+            'approved_at' => $approvedAt,
+            'completed_at' => $approvedAt,
+            'processed_by' => $user->id,
+            'gate_notes' => $note ?: $this->gate_notes,
+        ]);
+
+        $this->recordAudit($user, 'finished', $note ?: 'Saida aprovada e finalizada pela portaria.');
+
+        app(SafeNotifier::class)->notifyAuthorizationFinished($this, $user);
+    }
+
+    public function recordAudit(?User $user, string $action, ?string $note = null): AuthorizationAudit
+    {
+        return $this->audits()->updateOrCreate(
+            ['authorization_id' => $this->id],
+            [
+                'user_id' => $user?->id,
+                'action' => $action,
+                'note' => $note,
+            ],
+        );
     }
 
     public function isExitFlow(): bool
@@ -149,5 +185,36 @@ class Authorization extends Model
         $type = Str::ascii(Str::lower($this->type?->name ?? ''));
 
         return str_contains($type, 'saida');
+    }
+
+    protected function normalizeAndValidateInstitutionalTime(): void
+    {
+        $allowedClasses = ['class_1', 'class_2', 'class_3', 'class_4', 'class_5'];
+        $this->missed_classes = collect($this->missed_classes ?? [])
+            ->filter(fn (mixed $class): bool => in_array($class, $allowedClasses, true))
+            ->unique()
+            ->values()
+            ->all();
+
+        if (! $this->event_at) {
+            return;
+        }
+
+        $eventAt = Carbon::parse($this->event_at);
+        $today = today();
+
+        $eventAt->setDate($today->year, $today->month, $today->day);
+
+        $minutes = ($eventAt->hour * 60) + $eventAt->minute;
+        $minimum = (7 * 60) + 30;
+        $maximum = 23 * 60;
+
+        if ($minutes < $minimum || $minutes > $maximum) {
+            throw ValidationException::withMessages([
+                'event_time' => 'O horário deve estar entre 07:30 e 23:00.',
+            ]);
+        }
+
+        $this->event_at = $eventAt;
     }
 }

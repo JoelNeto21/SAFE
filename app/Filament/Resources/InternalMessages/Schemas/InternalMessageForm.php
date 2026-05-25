@@ -43,7 +43,8 @@ class InternalMessageForm
                             ->rows(5)
                             ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }

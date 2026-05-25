@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Authorizations;
 
+use App\Enums\AuthorizationStatus;
 use App\Filament\Resources\Authorizations\Pages\CreateAuthorization;
 use App\Filament\Resources\Authorizations\Pages\EditAuthorization;
 use App\Filament\Resources\Authorizations\Pages\ListAuthorizations;
@@ -47,16 +48,13 @@ class AuthorizationResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->where('status', '!=', AuthorizationStatus::Finished->value);
 
         /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->hasRole('professor')) {
-            return $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
-                $query
-                    ->where('teacher_id', $user->id)
-                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
-            });
+            return $query->where('teacher_id', $user->id);
         }
 
         if ($user && $user->hasRole('portaria')) {

@@ -187,7 +187,7 @@ def add_overview(doc: Document) -> None:
     add_heading(doc, "1. Visão geral da aplicação")
     add_para(
         doc,
-        "O SAFE foi criado para substituir autorizações em papel por um fluxo digital rastreável. A aplicação centraliza alunos, turmas, cursos, funcionários, autorizações, ocorrências, mensagens e notificações internas no painel administrativo.",
+        "O SAFE foi criado para substituir autorizações em papel por um fluxo digital rastreável. A aplicação centraliza alunos, turmas, cursos, funcionários, autorizações, mensagens e notificações internas no painel administrativo.",
     )
     add_bullets(
         doc,
@@ -214,10 +214,9 @@ def add_overview(doc: Document) -> None:
             ["Cursos e turmas", "Organização acadêmica e vínculo de professores a múltiplas turmas."],
             ["Alunos", "Cadastro dos estudantes e associação com turmas."],
             ["Autorizações", "Entrada tardia e saída antecipada com leitura, aprovação, recusa e encerramento."],
-            ["Ocorrências", "Registro de situações escolares com status, observações e histórico."],
             ["Notificações", "Alertas internos persistidos com status de leitura e badges."],
             ["Mensagens", "Comunicação interna por usuário ou setor."],
-            ["Históricos", "Auditoria de ações de autorizações e ocorrências."],
+            ["Históricos", "Auditoria de ações de autorizações."],
         ],
         [1.8, 4.5],
     )
@@ -305,12 +304,10 @@ def add_database(doc: Document) -> None:
             ["courses", "name, slug, description", "tem muitas turmas"],
             ["classrooms", "name, course_id, course, teacher_id", "pertence a curso; tem alunos; muitos professores"],
             ["classroom_teacher", "classroom_id, user_id", "pivot entre turmas e professores"],
-            ["students", "name, registration, classroom_id", "pertence a turma; tem autorizações e ocorrências"],
+            ["students", "name, registration, classroom_id", "pertence a turma; tem autorizações"],
             ["authorization_types", "name", "Entrada ou Saída"],
             ["authorizations", "student_id, type, status, reason, event_at, responsável, observações", "pertence a aluno, tipo, solicitante e processador"],
             ["authorization_audits", "authorization_id, user_id, action, note", "histórico de ações"],
-            ["occurrences", "student_id, registered_by, description, status, observations", "ocorrências escolares"],
-            ["occurrence_audits", "occurrence_id, user_id, action, note", "histórico de ocorrências"],
             ["notifications", "type, notifiable, data, read_at", "notificações persistidas Laravel"],
             ["internal_messages", "sender, recipient, recipient_role, subject, body, read_at", "mensagens internas"],
         ],
@@ -337,7 +334,6 @@ def add_models_and_seeders(doc: Document) -> None:
             "User possui teachingClassrooms para o vínculo muitos-para-muitos com turmas.",
             "Classroom pertence a Course, possui Students e Teachers.",
             "Authorization concentra os métodos markAsRead, approve, deny e finish.",
-            "Occurrence concentra close e registra auditoria.",
             "InternalMessage notifica destinatários ao ser criada.",
         ],
     )
@@ -365,8 +361,8 @@ def add_permissions(doc: Document) -> None:
         ["Perfil", "Acesso principal"],
         [
             ["Admin", "Acesso completo, incluindo CRUD de funcionários e exclusões administrativas."],
-            ["AQV", "Gerencia autorizações, ocorrências, cursos, turmas e alunos."],
-            ["Professor", "Visualiza alunos, turmas, autorizações e ocorrências apenas das turmas vinculadas."],
+            ["AQV", "Gerencia autorizações, cursos, turmas e alunos."],
+            ["Professor", "Visualiza alunos, turmas e autorizações apenas das turmas vinculadas."],
             ["Portaria", "Acompanha autorizações, confirma saídas e usa mensagens/notificações."],
         ],
         [1.5, 4.8],
@@ -378,7 +374,6 @@ def add_permissions(doc: Document) -> None:
             "UserPolicy limita gestão de funcionários ao Admin.",
             "StudentPolicy e ClassroomPolicy aplicam escopo por turma.",
             "AuthorizationPolicy permite visualização por setor e restringe edição estrutural a Admin/AQV.",
-            "OccurrencePolicy controla visualização e encerramento.",
             "InternalMessagePolicy limita visualização a remetente, destinatário, setor ou Admin.",
             "SystemNotificationPolicy garante que cada usuário veja apenas suas notificações.",
         ],
@@ -400,10 +395,9 @@ def add_filament(doc: Document) -> None:
             ["Classrooms", "Turmas, curso, professores vinculados e quantidade de alunos."],
             ["Students", "Alunos, matrícula, turma e curso."],
             ["Authorizations", "Autorizações digitais e ações do fluxo."],
-            ["Occurrences", "Ocorrências com status e encerramento."],
             ["Notifications", "Notificações persistidas e status de leitura."],
             ["InternalMessages", "Mensagens por destinatário ou setor."],
-            ["AuthorizationAudits e OccurrenceAudits", "Históricos somente leitura."],
+            ["AuthorizationAudits", "Históricos somente leitura."],
         ],
         [2.2, 4.1],
     )
@@ -476,7 +470,6 @@ def add_notifications_and_messages(doc: Document) -> None:
             "Aprovação de saída notifica a portaria.",
             "Recusa notifica solicitante e professores envolvidos.",
             "Finalização notifica solicitante e professores.",
-            "Ocorrência notifica AQV/Admin e professores da turma.",
             "Mensagem interna notifica destinatário direto ou setor.",
         ],
     )
@@ -491,7 +484,7 @@ def add_notifications_and_messages(doc: Document) -> None:
 def add_testing_and_deploy(doc: Document) -> None:
     add_heading(doc, "10. Testes, validação e deploy")
     add_heading(doc, "10.1 Testes automatizados", 2)
-    add_para(doc, "A suíte cobre autenticação, seeders, escopo de professores, fluxos de autorização, ocorrências, mensagens, notificações e renderização das principais telas do painel.")
+    add_para(doc, "A suíte cobre autenticação, seeders, escopo de professores, fluxos de autorização, mensagens, notificações e renderização das principais telas do painel.")
     add_code(doc, "php artisan test")
 
     add_heading(doc, "10.2 Qualidade de código", 2)
@@ -508,7 +501,6 @@ def add_testing_and_deploy(doc: Document) -> None:
             "Validar que Bruno vê apenas Desenvolvimento de Sistemas.",
             "Criar autorização de Entrada e confirmar leitura/aprovação.",
             "Criar autorização de Saída e finalizar pela portaria.",
-            "Criar ocorrência e verificar notificação e histórico.",
             "Enviar mensagem interna e marcar como lida.",
             "Verificar badges e listagens de notificações.",
         ],
@@ -555,7 +547,7 @@ vendor/bin/pint --test
             "Criar relatórios por curso, turma, período, motivo e setor.",
             "Adicionar QR Code para conferência de autorização na portaria.",
             "Adicionar cadastro de responsáveis legais e contato de emergência.",
-            "Exportar autorizações e ocorrências em PDF.",
+            "Exportar autorizações em PDF.",
             "Criar dashboard individual para AQV, professores e portaria.",
             "Integrar com sistemas acadêmicos externos.",
         ],

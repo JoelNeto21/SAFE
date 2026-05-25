@@ -30,9 +30,7 @@ class AuthorizationPolicy
         }
 
         if ($user->hasRole('professor')) {
-            return $authorization->student?->classroom
-                ? $user->canAccessClassroom($authorization->student->classroom)
-                : false;
+            return (int) $authorization->teacher_id === (int) $user->id;
         }
 
         return false;

@@ -14,6 +14,9 @@ class CreateAuthorization extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['requested_by'] = auth()->id();
+        $data['event_at'] = now()->setTimeFromTimeString($data['event_time'] ?? now()->format('H:i'));
+
+        unset($data['event_date'], $data['event_time']);
 
         return $data;
     }

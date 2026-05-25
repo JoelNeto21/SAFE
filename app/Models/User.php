@@ -59,11 +59,6 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Authorization::class, 'processed_by');
     }
 
-    public function registeredOccurrences(): HasMany
-    {
-        return $this->hasMany(Occurrence::class, 'registered_by');
-    }
-
     public function canAccessClassroom(Classroom $classroom): bool
     {
         if ($this->hasRole(['admin', 'aqv', 'portaria'])) {

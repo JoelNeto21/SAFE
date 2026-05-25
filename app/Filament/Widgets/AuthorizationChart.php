@@ -5,11 +5,17 @@ namespace App\Filament\Widgets;
 use App\Models\Authorization;
 use App\Models\User;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Database\Eloquent\Builder;
 
 class AuthorizationChart extends ChartWidget
 {
     protected ?string $heading = 'Autorizações por status';
+
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'xl' => 2,
+    ];
+
+    protected ?string $maxHeight = '22rem';
 
     protected function getData(): array
     {
@@ -17,10 +23,7 @@ class AuthorizationChart extends ChartWidget
         $user = auth()->user();
         $query = Authorization::query();
         if ($user && $user->hasRole('professor')) {
-            $query->whereHas('student.classroom', function (Builder $query) use ($user): void {
-                $query->where('teacher_id', $user->id)
-                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
-            });
+            $query->where('teacher_id', $user->id);
         }
 
         return [
@@ -33,6 +36,13 @@ class AuthorizationChart extends ChartWidget
                         (clone $query)->where('status', 'denied')->count(),
                         (clone $query)->where('status', 'finished')->count(),
                     ],
+                    'backgroundColor' => [
+                        '#f59e0b',
+                        '#22c55e',
+                        '#ef4444',
+                        '#71717a',
+                    ],
+                    'borderColor' => '#ffffff',
                 ],
             ],
 
@@ -47,6 +57,6 @@ class AuthorizationChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line';
+        return 'pie';
     }
 }

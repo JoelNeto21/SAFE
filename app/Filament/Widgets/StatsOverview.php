@@ -11,6 +11,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 class StatsOverview extends BaseWidget
 {
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'xl' => 1,
+    ];
+
+    protected int|array|null $columns = 1;
+
     protected function getStats(): array
     {
         /** @var User|null $user */
@@ -19,10 +26,7 @@ class StatsOverview extends BaseWidget
         $authorizationsQuery = Authorization::query();
         $studentsQuery = Student::query();
         if ($user && $user->hasRole('professor')) {
-            $authorizationsQuery->whereHas('student.classroom', function (Builder $query) use ($user): void {
-                $query->where('teacher_id', $user->id)
-                    ->orWhereHas('teachers', fn (Builder $teachers) => $teachers->whereKey($user->id));
-            });
+            $authorizationsQuery->where('teacher_id', $user->id);
 
             $studentsQuery->whereHas('classroom', function (Builder $query) use ($user): void {
                 $query->where('teacher_id', $user->id)

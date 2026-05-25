@@ -37,6 +37,11 @@ class AuthorizationsTable
                 TextColumn::make('type.name')
                     ->label('Tipo'),
 
+                TextColumn::make('teacher.name')
+                    ->label('Professor')
+                    ->placeholder('-')
+                    ->searchable(),
+
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -47,6 +52,21 @@ class AuthorizationsTable
                     ->dateTime('d/m/Y H:i')
                     ->label('Horário')
                     ->sortable(),
+
+                TextColumn::make('missed_classes')
+                    ->label('Aulas perdidas')
+                    ->state(fn ($record): string => collect($record->missed_classes ?? [])
+                        ->map(fn (string $class): string => match ($class) {
+                            'class_1' => '1ª',
+                            'class_2' => '2ª',
+                            'class_3' => '3ª',
+                            'class_4' => '4ª',
+                            'class_5' => '5ª',
+                            default => $class,
+                        })
+                        ->implode(', '))
+                    ->placeholder('-')
+                    ->toggleable(),
 
                 TextColumn::make('responsible_name')
                     ->label('Responsável')
@@ -82,7 +102,6 @@ class AuthorizationsTable
                         'pending' => 'Pendentes',
                         'approved' => 'Aprovadas',
                         'denied' => 'Recusadas',
-                        'finished' => 'Finalizadas',
                     ]),
 
                 SelectFilter::make('authorization_type_id')
@@ -98,7 +117,15 @@ class AuthorizationsTable
                     ->label('Confirmar leitura')
                     ->icon('heroicon-o-eye')
                     ->color('info')
-                    ->visible(fn ($record) => blank($record->read_at) && (self::currentUser()?->hasRole(['admin', 'professor']) ?? false))
+                    ->visible(function ($record): bool {
+                        $user = self::currentUser();
+
+                        return blank($record->read_at)
+                            && (
+                                ($user?->hasRole('admin') ?? false)
+                                || (($user?->hasRole('professor') ?? false) && (int) $record->teacher_id === (int) $user->id)
+                            );
+                    })
                     ->schema([
                         Textarea::make('note')
                             ->label('Observação')
@@ -117,8 +144,15 @@ class AuthorizationsTable
                     ->label('Aprovar/liberar')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === AuthorizationStatus::Pending
-                        && (self::currentUser()?->hasRole(['admin', 'aqv', 'professor']) ?? false))
+                    ->visible(function ($record): bool {
+                        $user = self::currentUser();
+
+                        return $record->status === AuthorizationStatus::Pending
+                            && (
+                                ($user?->hasRole(['admin', 'aqv']) ?? false)
+                                || (($user?->hasRole('professor') ?? false) && (int) $record->teacher_id === (int) $user->id)
+                            );
+                    })
                     ->schema([
                         Textarea::make('note')
                             ->label('Observação do professor')
@@ -128,7 +162,7 @@ class AuthorizationsTable
                         $record->approve(Auth::user(), $data['note'] ?? null);
 
                         Notification::make()
-                            ->title('Autorização aprovada')
+                            ->title($record->isExitFlow() ? 'Autorização aprovada' : 'Entrada aprovada e finalizada')
                             ->success()
                             ->send();
                     }),
@@ -137,8 +171,15 @@ class AuthorizationsTable
                     ->label('Recusar')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->visible(fn ($record) => $record->status === AuthorizationStatus::Pending
-                        && (self::currentUser()?->hasRole(['admin', 'aqv', 'professor']) ?? false))
+                    ->visible(function ($record): bool {
+                        $user = self::currentUser();
+
+                        return $record->status === AuthorizationStatus::Pending
+                            && (
+                                ($user?->hasRole(['admin', 'aqv']) ?? false)
+                                || (($user?->hasRole('professor') ?? false) && (int) $record->teacher_id === (int) $user->id)
+                            );
+                    })
                     ->schema([
                         Textarea::make('note')
                             ->label('Motivo da recusa')
@@ -155,21 +196,33 @@ class AuthorizationsTable
                     }),
 
                 Action::make('finish')
-                    ->label('Confirmar saída/encerrar')
+                    ->label('Aprovar saída/encerrar')
                     ->icon('heroicon-o-flag')
                     ->color('gray')
-                    ->visible(fn ($record) => $record->status === AuthorizationStatus::Approved
-                        && (self::currentUser()?->hasRole(['admin', 'aqv', 'portaria']) ?? false))
+                    ->visible(function ($record): bool {
+                        $user = self::currentUser();
+
+                        return $record->isExitFlow()
+                            && ($user?->hasRole(['admin', 'aqv', 'portaria']) ?? false)
+                            && (
+                                $record->status === AuthorizationStatus::Approved
+                                || ($record->status === AuthorizationStatus::Pending && filled($record->read_at) && ($user?->hasRole('portaria') ?? false))
+                            );
+                    })
                     ->schema([
                         Textarea::make('note')
-                            ->label('Observação final')
+                            ->label('Observação da portaria')
                             ->rows(3),
                     ])
                     ->action(function ($record, array $data): void {
-                        $record->finish(Auth::user(), $data['note'] ?? null);
+                        if ($record->status === AuthorizationStatus::Pending) {
+                            $record->approveAtGate(Auth::user(), $data['note'] ?? null);
+                        } else {
+                            $record->finish(Auth::user(), $data['note'] ?? null);
+                        }
 
                         Notification::make()
-                            ->title('Fluxo finalizado')
+                            ->title('Saída aprovada e finalizada')
                             ->success()
                             ->send();
                     }),

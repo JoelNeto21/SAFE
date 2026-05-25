@@ -57,9 +57,12 @@ class NotificationsTable
                 Action::make('open')
                     ->label('Abrir')
                     ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(fn ($record) => data_get($record->data, 'url'))
-                    ->openUrlInNewTab(false)
-                    ->visible(fn ($record) => filled(data_get($record->data, 'url'))),
+                    ->visible(fn ($record) => filled(data_get($record->data, 'url')))
+                    ->action(function ($record) {
+                        $record->markAsRead();
+
+                        return redirect()->to(data_get($record->data, 'url'));
+                    }),
 
                 Action::make('markRead')
                     ->label('Marcar como lida')

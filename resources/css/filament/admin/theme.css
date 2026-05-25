@@ -89,6 +89,32 @@
     color: var(--safe-muted);
 }
 
+.fi-resource-create-record-page .fi-header,
+.fi-resource-edit-record-page .fi-header,
+.fi-resource-create-record-page .fi-page-content,
+.fi-resource-edit-record-page .fi-page-content {
+    width: min(100%, 86rem);
+    margin-inline: auto;
+}
+
+.fi-resource-create-record-page .fi-page-content,
+.fi-resource-edit-record-page .fi-page-content {
+    padding-inline: clamp(1rem, 2vw, 2rem);
+}
+
+.fi-resource-create-record-page .fi-sc-form,
+.fi-resource-edit-record-page .fi-sc-form {
+    width: min(100%, 76rem);
+    margin-inline: auto;
+}
+
+.fi-resource-create-record-page .fi-sc-section,
+.fi-resource-edit-record-page .fi-sc-section,
+.fi-resource-create-record-page .fi-section,
+.fi-resource-edit-record-page .fi-section {
+    width: 100%;
+}
+
 .fi-section,
 .fi-ta,
 .fi-wi-stats-overview-stat,
@@ -190,11 +216,17 @@
     backdrop-filter: blur(18px);
 }
 
-.safe-login-shortcuts__header,
-.safe-login-shortcuts__item {
+.safe-login-shortcuts__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.safe-login-shortcuts__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     gap: 0.75rem;
 }
 
@@ -208,16 +240,30 @@
 .safe-login-shortcuts__list {
     display: grid;
     gap: 0.35rem;
+    /* smooth collapse/expand */
+    max-height: 999px;
+    overflow: hidden;
+    transition: max-height 260ms ease, opacity 200ms ease;
+    opacity: 1;
 }
 
 .safe-login-shortcuts__item {
     border-radius: 8px;
+    cursor: pointer;
     padding: 0.48rem 0.55rem;
-    transition: background-color 150ms ease;
+    outline: none;
+    transition:
+        background-color 150ms ease,
+        box-shadow 150ms ease;
 }
 
-.safe-login-shortcuts__item:hover {
+.safe-login-shortcuts__item:hover,
+.safe-login-shortcuts__item:focus-visible {
     background: rgba(17, 17, 19, 0.04);
+}
+
+.safe-login-shortcuts__item:focus-visible {
+    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
 }
 
 .safe-login-shortcuts__item dd {
@@ -225,7 +271,81 @@
     flex: 1;
     gap: 0.05rem;
     min-width: 0;
-    text-align: right;
+    text-align: left;
+}
+
+.safe-login-shortcuts__item dt {
+    margin-right: 0.5rem;
+}
+
+.safe-login-shortcuts__key {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 8.5rem;
+}
+
+.safe-login-shortcuts__plus {
+    color: var(--safe-ink);
+    font-weight: 700;
+}
+
+.kbd-ctrl {
+    background: #f1f1f2;
+}
+
+.kbd-key {
+    background: #f7f7f8;
+}
+
+/* toggle button in header */
+.safe-login-shortcuts__toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.15rem 0.35rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.safe-login-shortcuts__toggle-icon {
+    display: inline-block;
+    transition: transform 180ms ease;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* collapsed state: hide list and rotate icon */
+.safe-login-shortcuts.collapsed .safe-login-shortcuts__list {
+    max-height: 0;
+    opacity: 0;
+}
+
+.safe-login-shortcuts__toggle-icon {
+    transform-origin: center;
+}
+
+.safe-login-shortcuts.collapsed .safe-login-shortcuts__toggle-icon {
+    transform: rotate(180deg) scale(1);
+}
+
+/* increase horizontal padding for the ctrl badge */
+.safe-login-shortcuts kbd {
+    padding: 0 .65rem;
+    min-width: unset;
+    width: auto;
+}
+
+/* ensure names/emails align to the left and start after the key area */
+.safe-login-shortcuts__item dd {
+    display: grid;
+    flex: 1;
+    gap: 0.05rem;
+    min-width: 0;
+    text-align: left;
+    justify-items: start;
 }
 
 .safe-login-shortcuts__item strong {
@@ -243,10 +363,11 @@
 }
 
 .safe-login-shortcuts kbd {
-    display: inline-grid;
-    min-width: 1.55rem;
-    height: 1.4rem;
-    place-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    padding: 0 .45rem;
+    height: 1.6rem;
     border: 1px solid rgba(17, 17, 19, 0.12);
     border-radius: 6px;
     background: #f7f7f8;
@@ -262,5 +383,65 @@
         width: 100%;
         margin-top: 1rem;
         box-shadow: none;
+    }
+}
+
+/* Make main page content wider and centered with side padding */
+.fi-main .fi-page-main,
+.fi-main .fi-page-content {
+    width: min(100%, 90rem);
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 1.6vw, 1.75rem);
+}
+
+/* Dashboard tweaks: keep stat cards independent instead of nesting them in a white parent */
+.fi-dashboard-page .fi-page-content {
+    display: grid;
+    gap: 1rem;
+}
+
+.fi-dashboard-page .fi-wi {
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.fi-dashboard-page .fi-wi-stats-overview,
+.fi-dashboard-page .fi-wi-stats-overview .fi-sc-section,
+.fi-dashboard-page .fi-wi-stats-overview .fi-section {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fi-dashboard-page .fi-wi-stats-overview .fi-sc-section,
+.fi-dashboard-page .fi-wi-stats-overview .fi-section {
+    padding: 0;
+}
+
+.fi-dashboard-page .fi-wi-stats-overview .fi-section-content {
+    gap: 1rem;
+}
+
+.fi-wi-stats-overview-stat {
+    min-height: 6.75rem;
+    padding: 1.15rem;
+}
+
+.fi-dashboard-page .fi-wi-chart {
+    min-height: 100%;
+}
+
+.fi-dashboard-page .fi-wi-chart .fi-section-content {
+    padding-block: 1rem 1.25rem;
+}
+
+.fi-dashboard-page .fi-wi-chart-canvas-ctn {
+    max-width: 34rem;
+    margin-inline: auto;
+}
+
+@media (min-width: 1280px) {
+    .fi-dashboard-page .fi-wi-chart .fi-section {
+        height: 100%;
     }
 }

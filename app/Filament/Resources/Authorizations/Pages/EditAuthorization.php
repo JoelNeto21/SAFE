@@ -12,6 +12,15 @@ class EditAuthorization extends EditRecord
 
     protected static ?string $title = 'Editar autorização';
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['event_at'] = now()->setTimeFromTimeString($data['event_time'] ?? now()->format('H:i'));
+
+        unset($data['event_date'], $data['event_time']);
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

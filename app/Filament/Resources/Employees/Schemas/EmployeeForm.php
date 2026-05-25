@@ -66,7 +66,8 @@ class EmployeeForm
                             ->visible(fn (Get $get): bool => $get('role_name') === 'professor')
                             ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }

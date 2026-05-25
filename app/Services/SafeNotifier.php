@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Authorization;
 use App\Models\InternalMessage;
-use App\Models\Occurrence;
 use App\Models\User;
 use App\Notifications\SafeDatabaseNotification;
 use Illuminate\Support\Collection;
@@ -35,7 +34,7 @@ class SafeNotifier
 
     public function notifyAuthorizationCreated(Authorization $authorization): void
     {
-        $authorization->loadMissing('student.classroom.teachers', 'type');
+        $authorization->loadMissing('student', 'teacher', 'type');
 
         $this->notifyUsers(
             $this->teachersFor($authorization),
@@ -49,6 +48,20 @@ class SafeNotifier
             'authorization',
             'warning',
         );
+
+        if ($authorization->isExitFlow()) {
+            $this->notifyUsers(
+                User::role('portaria')->where('is_active', true)->get(),
+                'Autorização de saída registrada',
+                sprintf(
+                    'Há uma saída antecipada para %s em acompanhamento.',
+                    $authorization->student?->name ?? 'aluno'
+                ),
+                $this->authorizationUrl($authorization),
+                'authorization',
+                'info',
+            );
+        }
     }
 
     public function notifyAuthorizationRead(Authorization $authorization, User $reader): void
@@ -76,7 +89,7 @@ class SafeNotifier
 
         $this->notifyUsers(
             $targets,
-            $authorization->isExitFlow() ? 'Saída liberada pelo professor' : 'Entrada aprovada pelo professor',
+            $authorization->isExitFlow() ? 'Saída liberada pelo professor' : 'Entrada aprovada e finalizada',
             "{$approver->name} aprovou a autorização de {$authorization->student?->name}.",
             $this->authorizationUrl($authorization),
             'authorization',
@@ -114,27 +127,6 @@ class SafeNotifier
         );
     }
 
-    public function notifyOccurrenceCreated(Occurrence $occurrence): void
-    {
-        $occurrence->loadMissing('student.classroom.teachers', 'registrar');
-
-        $targets = User::role(['admin', 'aqv'])->where('is_active', true)->get()
-            ->merge($occurrence->student?->classroom?->teachers ?? collect());
-
-        $this->notifyUsers(
-            $targets,
-            'Nova ocorrência escolar',
-            sprintf(
-                '%s registrou ocorrência para %s.',
-                $occurrence->registrar?->name ?? 'Equipe SAFE',
-                $occurrence->student?->name ?? 'aluno'
-            ),
-            $this->occurrenceUrl($occurrence),
-            'occurrence',
-            'warning',
-        );
-    }
-
     public function notifyInternalMessage(InternalMessage $message): void
     {
         $message->loadMissing('sender', 'recipient');
@@ -160,7 +152,11 @@ class SafeNotifier
 
     public function teachersFor(Authorization $authorization): Collection
     {
-        $authorization->loadMissing('student.classroom.teachers', 'student.classroom.teacher');
+        $authorization->loadMissing('teacher', 'student.classroom.teachers', 'student.classroom.teacher');
+
+        if ($authorization->teacher) {
+            return collect([$authorization->teacher]);
+        }
 
         $classroom = $authorization->student?->classroom;
         if (! $classroom) {
@@ -177,11 +173,6 @@ class SafeNotifier
 
     protected function authorizationUrl(Authorization $authorization): string
     {
-        return "/admin/authorizations/{$authorization->id}/edit";
-    }
-
-    protected function occurrenceUrl(Occurrence $occurrence): string
-    {
-        return "/admin/occurrences/{$occurrence->id}/edit";
+        return '/admin/authorizations';
     }
 }

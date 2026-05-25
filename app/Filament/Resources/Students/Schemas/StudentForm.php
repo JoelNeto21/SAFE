@@ -6,7 +6,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class StudentForm
 {
@@ -25,8 +27,17 @@ class StudentForm
 
                         TextInput::make('registration')
                             ->label('Matrícula')
-                            ->placeholder('Ex.: 2026001')
+                            ->placeholder('Ex.: DS2026101')
+                            ->mask(RawJs::make(<<<'JS'
+                                $input.toUpperCase().startsWith('ELT') ? 'aaa9999999' : 'aa9999999'
+                            JS))
+                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper($state) : null)
+                            ->regex('/^[A-Za-z]{2,3}\d{7}$/')
+                            ->validationMessages([
+                                'regex' => 'Use o formato DS2026101 ou ELT2026101.',
+                            ])
                             ->required()
+                            ->maxLength(10)
                             ->unique(ignoreRecord: true),
 
                         Select::make('classroom_id')
@@ -45,7 +56,8 @@ class StudentForm
                             ->preload()
                             ->required(),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }

@@ -26,7 +26,7 @@
                     <div class="mt-14 max-w-xl">
                         <p class="text-sm font-semibold uppercase tracking-[0.08em] text-[#e30613]">Acesso institucional</p>
                         <h1 class="mt-4 text-5xl font-semibold tracking-normal text-zinc-950">Gestão escolar simples, segura e objetiva.</h1>
-                        <p class="mt-5 text-lg leading-8 text-zinc-600">Controle autorizações, ocorrências, turmas e alunos em um ambiente desenhado para a rotina do SENAI-SP.</p>
+                        <p class="mt-5 text-lg leading-8 text-zinc-600">Controle autorizações, turmas e alunos em um ambiente desenhado para a rotina do SENAI-SP.</p>
                     </div>
                 </div>
 

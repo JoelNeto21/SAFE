@@ -23,9 +23,4 @@ class Student extends Model
     {
         return $this->hasMany(Authorization::class);
     }
-
-    public function occurrences(): HasMany
-    {
-        return $this->hasMany(Occurrence::class);
-    }
 }

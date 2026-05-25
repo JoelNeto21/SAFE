@@ -1,175 +1,219 @@
-# SAFE - Sistema de Autorização e Fluxo Escolar
+# SAFE - Sistema de Autorizacao e Fluxo Escolar
 
-SAFE é uma aplicação Laravel com painel administrativo em Filament para digitalizar autorizações, ocorrências, notificações e comunicação interna entre AQV, professores e portaria.
+SAFE e uma aplicacao Laravel com painel administrativo em Filament para controlar autorizacoes de entrada tardia e saida antecipada de alunos. O objetivo e substituir registros manuais por um fluxo digital rastreavel entre AQV, professores e portaria.
 
-O projeto substitui fluxos manuais em papel por registros digitais rastreáveis, com histórico de ações, permissões por setor e escopo de acesso por turma.
+## Visao geral
 
-## Sobre o projeto
+A aplicacao organiza o processo operacional da escola em um painel unico:
 
-O SAFE resolve o controle operacional de entrada tardia e saída antecipada de alunos. A AQV registra a autorização, o professor da turma valida a movimentação e a portaria acompanha as liberações necessárias para finalizar o fluxo.
+- AQV e portaria cadastram autorizacoes para alunos.
+- O professor responsavel pela turma avalia a solicitacao.
+- Entradas sao encerradas automaticamente apos aprovacao do professor.
+- Saidas seguem para a portaria, que libera e finaliza o fluxo.
+- Autorizacoes finalizadas saem da tela operacional e permanecem no historico.
+- Notificacoes internas registram os passos relevantes do fluxo.
 
-Principais objetivos:
+## Stack
 
-- centralizar autorizações de entrada e saída;
-- controlar quais turmas e alunos cada professor pode acessar;
-- manter histórico auditável de leituras, aprovações, recusas e finalizações;
-- notificar automaticamente os setores envolvidos;
-- oferecer um painel administrativo pronto para demonstração acadêmica.
+| Camada | Tecnologia |
+| --- | --- |
+| Backend | PHP 8.3, Laravel 13 |
+| Admin | Filament 5, Livewire 4 |
+| Banco local | MySQL |
+| Testes | PHPUnit, SQLite em memoria |
+| Permissoes | Spatie Laravel Permission |
+| Frontend | Tailwind CSS 4, Vite, Chart.js |
+| Qualidade | Laravel Pint |
 
-## Stack utilizada
+## Perfis de acesso
 
-- PHP 8.3
-- Laravel 13
-- Filament 5
-- Livewire 4
-- MySQL em desenvolvimento local
-- SQLite em memória para testes automatizados
-- Spatie Laravel Permission
-- Tailwind CSS 4
-- Vite
-- PHPUnit
-- Laravel Pint
-
-## Arquitetura
-
-A aplicação segue a estrutura padrão do Laravel, com separação por domínio:
-
-- `app/Models`: entidades principais, como `User`, `Course`, `Classroom`, `Student`, `Authorization`, `Occurrence`, `InternalMessage` e modelos de auditoria.
-- `app/Filament/Resources`: telas administrativas do Filament para CRUDs e listagens operacionais.
-- `app/Policies`: regras de autorização por perfil e por escopo de turma.
-- `app/Services/SafeNotifier.php`: serviço central de notificações internas.
-- `app/Notifications`: notificações persistidas no banco.
-- `database/migrations`: estrutura do banco, relações, histórico e mensagens.
-- `database/seeders`: dados de demonstração, usuários de teste, cursos, turmas e alunos.
-- `tests/Feature`: testes de autenticação, navegação, seeders, permissões e fluxos SAFE.
+| Perfil | Responsabilidade |
+| --- | --- |
+| Admin | Gerencia usuarios, cadastros, permissoes e toda a operacao. |
+| AQV | Cadastra e acompanha autorizacoes, alunos, turmas e comunicacoes internas. |
+| Professor | Visualiza apenas turmas e autorizacoes sob sua responsabilidade. |
+| Portaria | Acompanha autorizacoes de saida e confirma a liberacao final do aluno. |
 
 ## Funcionalidades
 
-- Autenticação no painel administrativo.
-- Perfis por setor: Admin, AQV, Professor e Portaria.
-- CRUD de funcionários com vínculo de professores a múltiplas turmas.
-- Cadastro de cursos, turmas e alunos.
-- Seeders com cursos Desenvolvimento de Sistemas e Eletroeletrônica.
-- Seeders com 3 turmas por curso e 5 alunos por turma.
-- Professores seedados: Eduardo, Samuel e Bruno.
-- Eduardo acessa DS e Eletroeletrônica.
-- Samuel acessa apenas Eletroeletrônica.
-- Bruno acessa apenas Desenvolvimento de Sistemas.
-- Fluxo de autorização de entrada.
-- Fluxo de autorização de saída antecipada.
-- Confirmação de leitura pelo professor.
-- Aprovação, recusa e finalização com histórico.
-- Notificações internas persistidas no banco.
-- Badges de mensagens e notificações não lidas.
-- Mensagens internas por usuário ou setor.
-- Ocorrências escolares com status, observações e auditoria.
-- Históricos de autorizações e ocorrências disponíveis no painel.
+- Autenticacao no painel `/admin`.
+- CRUD de funcionarios, cursos, turmas e alunos.
+- Vinculo de professores a uma ou mais turmas.
+- Cadastro de autorizacoes de entrada e saida.
+- Selecao obrigatoria do professor responsavel conforme a turma do aluno.
+- Notificacao enviada somente ao professor responsavel pela autorizacao.
+- Notificacao para a portaria quando houver fluxo de saida.
+- Marcacao automatica de notificacao como lida ao abrir.
+- Badge de notificacoes baseado apenas em itens nao lidos.
+- Historico auditavel de leitura, aprovacao, recusa e finalizacao.
+- Grafico de pizza para distribuicao dos status das autorizacoes.
+- Centralizacao visual das telas de criacao e edicao.
 
-## Fluxo AQV, Professor e Portaria
+## Regras de autorizacao
 
-1. A AQV ou a portaria registra uma autorização digital.
-2. O sistema notifica os professores vinculados à turma do aluno.
-3. O professor confirma leitura e aprova ou recusa a solicitação.
-4. Em saída antecipada, a portaria recebe a liberação do professor.
-5. A portaria confirma a saída e encerra o fluxo.
-6. Cada etapa gera registros em histórico e notificações internas.
+### Entrada
 
-## Como executar
+1. AQV ou portaria cria a autorizacao de entrada.
+2. O sistema envia a notificacao ao professor responsavel.
+3. O professor aprova ou recusa.
+4. Ao aprovar, a autorizacao e finalizada automaticamente.
+5. O registro deixa a lista operacional e fica no historico.
 
-Clone o projeto e instale as dependências:
+### Saida
+
+1. AQV ou portaria cria a autorizacao de saida.
+2. O professor responsavel recebe a notificacao e avalia.
+3. Se aprovada, a portaria e notificada.
+4. A portaria confirma a liberacao do aluno.
+5. A autorizacao e finalizada e mantida no historico.
+
+## Aulas perdidas
+
+Ao criar ou editar uma autorizacao, existe uma secao opcional para indicar aulas ou periodos perdidos no dia. Sao 5 checkboxes:
+
+- 1a aula / periodo
+- 2a aula / periodo
+- 3a aula / periodo
+- 4a aula / periodo
+- 5a aula / periodo
+
+Esses campos nao sao obrigatorios e devem ser usados apenas quando fizer sentido para o horario de entrada ou saida do aluno.
+
+## Validacoes e mascaras
+
+- O horario da autorizacao deve ficar entre `07:30` e `23:00`.
+- A data da autorizacao e sempre a data atual.
+- A hora pode ser editada no formulario.
+- Matriculas de alunos possuem mascara e validacao visual.
+- Nomes de turmas possuem mascara e padronizacao.
+- Campos nativos de e-mail, senha e horario usam os tipos apropriados do navegador.
+- As validacoes tambem sao aplicadas no backend para evitar dados fora do padrao.
+
+## Estrutura do projeto
+
+| Caminho | Descricao |
+| --- | --- |
+| `app/Models` | Entidades principais do dominio, como usuarios, alunos, turmas e autorizacoes. |
+| `app/Filament/Resources` | Telas administrativas, formularios, tabelas e acoes do painel. |
+| `app/Policies` | Regras de acesso por perfil e escopo de turma. |
+| `app/Services/SafeNotifier.php` | Servico central de notificacoes internas. |
+| `database/migrations` | Estrutura do banco de dados. |
+| `database/seeders` | Dados iniciais e usuarios de demonstracao. |
+| `tests/Feature` | Testes automatizados dos fluxos principais. |
+| `resources/css/filament` | Ajustes visuais do painel Filament. |
+
+## Configuracao local
+
+Instale as dependencias:
 
 ```bash
 composer install
 npm install
 ```
 
-Configure o ambiente:
+Crie o arquivo de ambiente:
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Configure o banco no `.env`. Exemplo para MySQL local:
+Configure o MySQL local no `.env`:
 
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_PORT=3308
+DB_PORT=3306
 DB_DATABASE=safe
 DB_USERNAME=root
-DB_PASSWORD=
+DB_PASSWORD=senaisp
 ```
 
-Crie e popule o banco:
+Crie o banco `safe` no MySQL antes de rodar as migracoes, caso ele ainda nao exista.
+
+## Banco e seeders
+
+Para recriar o banco do zero e popular os dados de demonstracao:
 
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-Compile os assets:
+Os seeders criam perfis, permissoes, usuarios de teste, cursos, turmas, alunos e tipos de autorizacao.
+
+## Assets
+
+Compile os assets de producao:
 
 ```bash
 npm run build
 ```
 
+Durante desenvolvimento, use:
+
+```bash
+npm run dev
+```
+
+## Execucao
+
 Suba o servidor local:
 
 ```bash
-php artisan serve
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Acesse:
+Acesse o painel:
 
 ```text
 http://127.0.0.1:8000/admin
 ```
 
-## Usuários de teste
+## Usuarios de teste
 
-Todos os usuários abaixo usam a senha `12345678`, exceto `test@example.com`, que usa `password`.
+Todos os usuarios abaixo usam a senha `12345678`, exceto `test@example.com`, que usa `password`.
 
-| Perfil | E-mail | Permissão |
-| --- | --- | --- |
-| Admin | `admin@safe.com` | Acesso total, incluindo funcionários |
-| AQV | `aqv@safe.com` | Autorizações, ocorrências, alunos e turmas |
-| Portaria | `portaria@safe.com` | Autorizações, mensagens e confirmações |
-| Professor Eduardo | `eduardo@safe.com` | DS e Eletroeletrônica |
-| Professor Samuel | `samuel@safe.com` | Eletroeletrônica |
-| Professor Bruno | `bruno@safe.com` | Desenvolvimento de Sistemas |
-| Test User | `test@example.com` | Admin técnico para testes |
+| Perfil | E-mail | Senha | Escopo |
+| --- | --- | --- | --- |
+| Admin | `admin@safe.com` | `12345678` | Acesso total |
+| AQV | `aqv@safe.com` | `12345678` | Operacao de autorizacoes e cadastros escolares |
+| Portaria | `portaria@safe.com` | `12345678` | Confirmacao de saidas |
+| Professor Eduardo | `eduardo@safe.com` | `12345678` | DS e Eletroeletronica |
+| Professor Samuel | `samuel@safe.com` | `12345678` | Eletroeletronica |
+| Professor Bruno | `bruno@safe.com` | `12345678` | Desenvolvimento de Sistemas |
+| Test User | `test@example.com` | `password` | Usuario tecnico para testes |
 
 ## Testes e qualidade
 
-Execute a suíte automatizada:
+Execute a suite automatizada:
 
 ```bash
 php artisan test
 ```
 
-Verifique o padrão de código:
+Verifique o padrao de codigo:
 
 ```bash
 vendor/bin/pint --test
 ```
 
-Compile os assets antes de publicar:
+Limpe caches da aplicacao:
 
 ```bash
-npm run build
+php artisan optimize:clear
 ```
 
-## Melhorias futuras
+## Checklist de demonstracao
 
-- Broadcasting com WebSockets para notificações instantâneas sem polling.
-- Assinatura digital ou confirmação por QR Code na portaria.
-- Relatórios por período, curso, turma e motivo.
-- Exportação de autorizações e ocorrências em PDF.
-- Dashboard específico por setor.
-- Controle de responsáveis legais do aluno.
-- Integração com sistemas acadêmicos externos.
-- Auditoria avançada com trilhas por IP e dispositivo.
+1. Entrar como AQV e criar uma autorizacao de entrada para um aluno.
+2. Selecionar o professor responsavel exibido conforme a turma.
+3. Entrar como professor e abrir a notificacao recebida.
+4. Aprovar a entrada e confirmar que ela foi finalizada.
+5. Criar uma autorizacao de saida.
+6. Aprovar como professor.
+7. Entrar como portaria, abrir a notificacao e finalizar a saida.
+8. Conferir o registro em Historico de Autorizacoes.
 
-## Licença
+## Licenca
 
-Projeto acadêmico desenvolvido sobre Laravel e bibliotecas open source.
+Projeto academico desenvolvido com Laravel, Filament e bibliotecas open source.
